@@ -5,7 +5,9 @@ import { api } from '@/api';
 
 vi.mock('@/api', () => ({ api: { get: vi.fn(), post: vi.fn() } }));
 
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => {
+  vi.clearAllMocks();
+});
 
 const pendingInvoice = { id: 'inv-1', status: 'pending' };
 const PANEL = '[data-testid="token-payment-panel"]';
