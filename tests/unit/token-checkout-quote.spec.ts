@@ -21,9 +21,12 @@ describe('TokenCheckoutQuote', () => {
     });
     await flushPromises();
     expect(wrapper.find(QUOTE).exists()).toBe(true);
-    expect(wrapper.find('[data-testid="tcq-balance"]').text()).toContain('8924');
-    expect(wrapper.find('[data-testid="tcq-cost"]').text()).toContain('600');
-    expect(wrapper.find('[data-testid="tcq-after"]').text()).toContain('8324');
+    // The panel formats numbers via Intl.NumberFormat (locale group separators),
+    // so we assert on the contained digits + "tokens" suffix rather than the
+    // raw integer string.
+    expect(wrapper.find('[data-testid="tcq-balance"]').text()).toMatch(/8[,.\s]?924\s+tokens/);
+    expect(wrapper.find('[data-testid="tcq-cost"]').text()).toMatch(/600\s+tokens/);
+    expect(wrapper.find('[data-testid="tcq-after"]').text()).toMatch(/8[,.\s]?324\s+tokens/);
     expect(api.get).toHaveBeenCalledWith(expect.stringContaining('/plugins/token-payment/quote?amount=29.99&currency=USD'));
   });
 

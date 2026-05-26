@@ -1,10 +1,20 @@
 import type { IPlugin, IPlatformSDK } from 'vbwd-view-component';
-import { registerPaymentDataContributor } from 'vbwd-view-component';
+import {
+  registerPaymentDataContributor,
+  registerPaymentInformationContributor,
+} from 'vbwd-view-component';
 import { registerInvoicePaymentMethod } from '@/extensions/invoicePaymentMethods';
 import { registerCheckoutPaymentMethod } from '@/registries/checkoutPaymentMethods';
 import { api } from '@/api';
 import TokenPaymentPanel from './src/TokenPaymentPanel.vue';
 import TokenCheckoutQuote from './src/TokenCheckoutQuote.vue';
+
+/** Plugin-owned formatter for ``tokens_paid`` payloads. */
+function formatTokensPaidAmount(data: unknown): string {
+  const amount = (data as { amount?: number } | null)?.amount ?? 0;
+  const formatted = new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(amount);
+  return `${formatted} tokens`;
+}
 
 /**
  * fe-user token-payment plugin.
@@ -35,15 +45,30 @@ export const tokenPaymentPlugin: IPlugin = {
         api.post(`/plugins/token-payment/invoices/${invoiceId}/pay`, {}),
     });
     // PAID invoice metadata: render the ``tokens_paid`` namespace inside the
-    // shared "Payment data" block. Reads straight from ``invoice.metadata``
-    // — no follow-up API call, no plugin-specific UI in the host view.
+    // shared "Payment data" block on both fe-user and fe-admin invoice-detail
+    // screens, reading ``invoice.metadata.tokens_paid.amount`` written by the
+    // backend ``/pay`` route — zero extra API call. ``matchPaymentMethod``
+    // covers zero-price / legacy invoices where the metadata was never
+    // written: the row still renders as "Paid with tokens · 0 tokens".
     registerPaymentDataContributor('tokens_paid', {
       label: 'Paid with tokens',
-      format: (data) => {
-        const amount = (data as { amount?: number } | null)?.amount ?? 0;
-        return `${amount} tokens`;
-      },
+      format: formatTokensPaidAmount,
+      matchPaymentMethod: ['token_balance', 'token_payment'],
       order: 10,
+    });
+
+    // fe-admin "Payment Information" table — multi-row contribution:
+    //   Payment type    Tokens
+    //   Tokens paid     <amount>
+    // Reuses the same matchPaymentMethod fallback so the section still
+    // renders for zero-price invoices that never wrote ``tokens_paid``.
+    registerPaymentInformationContributor('tokens_paid', {
+      order: 10,
+      matchPaymentMethod: ['token_balance', 'token_payment'],
+      rows: (data) => [
+        { label: 'Payment type', value: 'Tokens', order: 1 },
+        { label: 'Tokens paid', value: formatTokensPaidAmount(data), order: 2 },
+      ],
     });
   },
 };
