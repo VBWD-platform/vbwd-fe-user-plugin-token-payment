@@ -4,6 +4,7 @@ import { registerCheckoutPaymentMethod } from '@/registries/checkoutPaymentMetho
 import { api } from '@/api';
 import TokenPaymentPanel from './src/TokenPaymentPanel.vue';
 import TokenCheckoutQuote from './src/TokenCheckoutQuote.vue';
+import InvoicePaidTokensInfo from './src/InvoicePaidTokensInfo.vue';
 
 /**
  * fe-user token-payment plugin.
@@ -21,7 +22,13 @@ export const tokenPaymentPlugin: IPlugin = {
   _active: false,
 
   install(_sdk: IPlatformSDK) {
+    // PENDING invoice: "Pay with tokens" panel (s10).
     registerInvoicePaymentMethod(TokenPaymentPanel);
+    // PAID invoice: "Paid with tokens — N tokens" info row alongside the fiat
+    // total. Self-gates on status='paid' + token-payment method; both share
+    // the same agnostic registry — core never names the plugin.
+    registerInvoicePaymentMethod(InvoicePaidTokensInfo);
+    // Checkout: live quote block + instant pay (s12).
     registerCheckoutPaymentMethod('token_balance', {
       detailComponent: TokenCheckoutQuote,
       instantPay: (invoiceId: string) =>
