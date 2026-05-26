@@ -1,14 +1,18 @@
 import type { IPlugin, IPlatformSDK } from 'vbwd-view-component';
 import { registerInvoicePaymentMethod } from '@/extensions/invoicePaymentMethods';
+import { registerCheckoutPaymentMethod } from '@/registries/checkoutPaymentMethods';
+import { api } from '@/api';
 import TokenPaymentPanel from './src/TokenPaymentPanel.vue';
+import TokenCheckoutQuote from './src/TokenCheckoutQuote.vue';
 
 /**
  * fe-user token-payment plugin.
  *
- * Registers a "Pay with tokens" panel into the agnostic invoice payment-method
- * registry. The panel self-gates: it asks the backend plugin for a quote and
- * only renders when token payment is available (plugin enabled + a rate for the
- * invoice currency). Backed by `vbwd-plugin-token-payment` (backend).
+ * Two registrations, both agnostic:
+ *   - **Invoice detail (s10):** a "Pay with tokens" panel on PENDING invoices.
+ *   - **Checkout (s12):** a live quote block under the "Token balance" option +
+ *     an ``instantPay`` hook so submit pays from the wallet in-band (no
+ *     gateway redirect, no PENDING). Reuses the backend `/pay` endpoint.
  */
 export const tokenPaymentPlugin: IPlugin = {
   name: 'token-payment',
@@ -18,6 +22,11 @@ export const tokenPaymentPlugin: IPlugin = {
 
   install(_sdk: IPlatformSDK) {
     registerInvoicePaymentMethod(TokenPaymentPanel);
+    registerCheckoutPaymentMethod('token_balance', {
+      detailComponent: TokenCheckoutQuote,
+      instantPay: (invoiceId: string) =>
+        api.post(`/plugins/token-payment/invoices/${invoiceId}/pay`, {}),
+    });
   },
 };
 

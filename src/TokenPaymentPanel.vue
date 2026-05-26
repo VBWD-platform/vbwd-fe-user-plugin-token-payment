@@ -120,11 +120,13 @@ onMounted(loadQuote);
   padding: 1rem;
   border: 1px solid var(--vbwd-border, #e2e8f0);
   border-radius: 8px;
+  min-width: 240px;
 }
 .token-payment__title { margin: 0 0 0.5rem; font-size: 1rem; }
 .token-payment__row {
   display: flex;
   justify-content: space-between;
+  gap: 1rem;
   font-size: 0.9rem;
   padding: 0.15rem 0;
 }
