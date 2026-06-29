@@ -31,7 +31,7 @@ function formatTokensPaidAmount(data: unknown): string {
  */
 export const tokenPaymentPlugin: IPlugin = {
   name: 'token-payment',
-  version: '26.6',
+  version: '26.6.1',
   description: 'Pay an invoice with your token balance',
   _active: false,
 
